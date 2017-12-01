@@ -4,6 +4,7 @@ Created on 2017年12月1日
 
 @author: why
 '''
+__metaclass__  = type
 class Bird:
     def __init__(self):
         self.hungry = True
@@ -16,7 +17,7 @@ class Bird:
 
 class SongBird(Bird):
     def __init__(self):
-        Bird.__init__(self)
+        super(SongBird, self).__init__()
         self.sound='Squawk!'
     def sing(self):
         print self.sound
