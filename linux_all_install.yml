@@ -1,0 +1,146 @@
+---
+- hosts: PLUSIN 
+  remote_user: root
+  vars: 
+  tasks:
+    - name: make ansible dir
+      shell: 'ls /opt/ansible || mkdir -p /opt/ansible && ls {{ source }} || mkdir -p {{ source }}'  
+
+    - name: copy package to object
+      copy: src={{ source }}/{{ item.file }} dest=/{{ item.path }}/{{ item.file }}
+      with_items:
+        - { path: '{{ source }}', file: 'modifyfile.sh' }
+        - { path: '{{ source }}', file: 'redis-3.1.0.gem' }   
+        - { path: '/etc/selinux', file: 'config' } 
+        - { path: '/etc/yum.repos.d', file: 'CentOS-Base.repo' }
+        - { path: '/etc/yum.repos.d', file: 'epel.repo' }
+        - { path: '/etc/yum.repos.d', file: 'rpmforge.repo' }
+        - { path: '/etc/yum.repos.d', file: 'cloudera-manager.repo' }                              
+        - { path: '{{ source }}', file: 'xdpp.bash_profile' }
+        - { path: '{{ source }}', file: 'xdpp.bashrc' }
+        - { path: '/opt/ansible/packet', file: 'jdk-7u79-linux-x64.rpm' }
+        - { path: '{{ source }}', file: 'jdk-8u102-linux-x64.rpm' }        
+        - { path: '/etc/security/', file: 'limits.conf' }
+        - { path: '/etc/security/limits.d', file: '90-nproc.conf' }        
+        - { path: '/etc', file: 'hosts' }        
+        - { path: '{{ source }}', file: 'instantclient_11_2.zip' }    
+        - { path: '{{ source }}', file: 'tnsnames.ora' }   
+    
+    - name: setenforce 0 
+      shell: 'setenforce 0'
+          
+    - name: change hostname of server 
+      shell: 'echo NETWORKING=yes > /etc/sysconfig/network && echo HOSTNAME={{ hostname }} >> /etc/sysconfig/network && hostname {{ hostname }}'
+
+    - name: set dns server
+      shell: 'chattr -i /etc/resolv.conf && sh {{ source }}/modifyfile.sh "nameserver {{ dns1 }}" /etc/resolv.conf && sh {{ source }}/modifyfile.sh "nameserver {{ dns2 }}" /etc/resolv.conf && chattr +i /etc/resolv.conf'
+      
+    - name: set ntp client of every linux computer 
+      shell: 'sed "s/server/#server/" /etc/ntp.conf >temp && mv temp /etc/ntp.conf && echo server {{ ntpserver }} >> /etc/ntp.conf && hwclock --systohc && service ntpd restart '
+
+    - name: set yum client of every linux computer 
+      shell: 'sh {{ source }}/modifyfile.sh "sslverify=False"  /etc/yum.conf'
+
+    - name: install ruby
+      shell: 'yum -y install ruby.x86_64'
+
+    - name: install gem
+      shell: 'yum -y install rubygems.noarch'
+
+    - name: install rdoc
+      shell: 'yum -y install ruby-rdoc'
+
+    - name: install redis
+      shell: 'gem install {{ source }}/redis-3.1.0.gem'
+
+    - name: create xdpp group
+      shell: 'grep xdpp /etc/group || groupadd xdpp'
+
+    - name: create xdpp user
+      shell: 'grep xdpp /etc/passwd || useradd -g xdpp -d /opt/xdpp -s /bin/bash xdpp'
+
+    - name: create password of xdpp user
+      shell: 'echo "xdpp" | passwd --stdin xdpp'
+
+    - name: create xdpp bash_profile and bashrc 
+      shell: 'cd /opt/xdpp && cp -rf {{ source }}/xdpp.bash_profile .bash_profile && cp -rf {{ source }}/xdpp.bashrc .bashrc && chown -R xdpp:xdpp /opt/xdpp && chmod 777 -R /opt/xdpp'
+
+    - name: install java 1.7.0_79
+      shell: 'rpm -qa | grep jdk-1.7.0_79-fcs.x86_64 || rpm -ivh /opt/ansible/packet/jdk-7u79-linux-x64.rpm'
+
+    - name: install java 1.8.0_102
+      shell: 'rpm -qa | grep jdk1.8.0_102-1.8.0_102-fcs.x86_64 || rpm -ivh {{ source }}/jdk-8u102-linux-x64.rpm'
+
+    - name: close off firewall temporarily
+      shell: 'service iptables stop'
+
+    - name: close off firewall forever
+      shell: 'chkconfig iptables off'
+      
+    - name: modify /etc/sysctl.conf tcp_keepalive_intvl
+      shell: 'sh {{ source }}/modifyfile.sh "net.ipv4.tcp_keepalive_intvl = 15" /etc/sysctl.conf'
+
+    - name: modify /etc/sysctl.conf net.ipv4.tcp_keepalive_probes
+      shell: 'sh {{ source }}/modifyfile.sh "net.ipv4.tcp_keepalive_probes = 3" /etc/sysctl.conf'
+    
+    - name: modify /etc/sysctl.conf net.ipv4.tcp_keepalive_time
+      shell: 'sh {{ source }}/modifyfile.sh "net.ipv4.tcp_keepalive_time = 60" /etc/sysctl.conf'
+
+    - name: modify /etc/sysctl.conf vm.swappiness
+      shell: 'sh {{ source }}/modifyfile.sh "vm.swappiness=0" /etc/sysctl.conf'
+ 
+    - name: modify /etc/rc.local echo never > /sys/kernel/mm/transparent_hugepage/defrag  temporarily
+      shell: 'echo never > /sys/kernel/mm/transparent_hugepage/defrag'	  
+
+    - name: modify /etc/rc.local echo never > /sys/kernel/mm/transparent_hugepage/defrag
+      shell: 'sh {{ source }}/modifyfile.sh "echo never > /sys/kernel/mm/transparent_hugepage/defrag" /etc/rc.local'
+
+    - name: modify tcp_keepalive_time 
+      shell: 'echo 60 > /proc/sys/net/ipv4/tcp_keepalive_time '
+
+    - name: modify tcp_keepalive_intvl
+      shell: ' echo 15 > /proc/sys/net/ipv4/tcp_keepalive_intvl'
+
+    - name: modify tcp_keepalive_probes
+      shell: 'echo 3 > /proc/sys/net/ipv4/tcp_keepalive_probes'
+
+    - name: modify /etc/pam.d/login pession pam_limits.so
+      shell: 'sh {{ source }}/modifyfile.sh "session required /lib64/security/pam_limits.so" /etc/pam.d/login'
+
+    - name: modify sshd
+      shell: 'sh {{ source }}/modifyfile.sh "UseDNS no" /etc/ssh/sshd_config && service sshd restart'
+      
+    - name: install oracle client
+      shell: 'ls {{ source }}/../../xdpp/oracle || mkdir -p {{ source }}/../../oracle && cd {{ source }}/../../oracle && unzip -o {{ source }}/instantclient_11_2.zip && cp {{ source }}/tnsnames.ora {{ source }}/../../oracle/instantclient_11_2/network/admin'  
+
+    - name: modify NLS_LANG
+      shell: 'sh {{ source }}/modifyfile.sh "export NLS_LANG=AMERICAN_AMERICA.ZHS16GBK" /etc/profile'
+
+    - name: modify ORACLE_IC_HOME 
+      shell: 'sh {{ source }}/modifyfile.sh "export ORACLE_IC_HOME=/opt/xdpp/oracle/instantclient_11_2" /etc/profile'
+
+    - name: modify  ORACLE_HOME
+      shell: 'sh {{ source }}/modifyfile.sh "export ORACLE_HOME=\$ORACLE_IC_HOME" /etc/profile'
+
+    - name: modify  PATH
+      shell: 'sh {{ source }}/modifyfile.sh "export PATH=\$PATH:\$HOME/bin:\$ORACLE_IC_HOME" /etc/profile'
+
+    - name: modify  LD_LIBRARY_PATH
+      shell: 'sh {{ source }}/modifyfile.sh "export LD_LIBRARY_PATH=\$ORACLE_IC_HOME:/usr/lib" /etc/profile'
+
+    - name: modify  ORACLE_SID
+      shell: 'sh {{ source }}/modifyfile.sh "export ORACLE_SID=zhjkdb" /etc/profile'
+
+    - name: modify  TNS_ADMIN
+      shell: 'sh {{ source }}/modifyfile.sh "export TNS_ADMIN=\$ORACLE_HOME/network/admin" /etc/profile'
+
+    - name: modify  TNS_NAMES
+      shell: 'sh {{ source }}/modifyfile.sh "export TNS_NAMES=tnsnames.ora" /etc/profile'
+
+    - name: modify vm.overcommit_memory
+      shell: 'sh {{ source }}/modifyfile.sh "vm.overcommit_memory = 1" /etc/sysctl.conf'
+ 
+    - name: sysctl reload
+      shell: '/sbin/sysctl -p'
+      
+
