@@ -25,10 +25,12 @@
         - { path: '/etc', file: 'hosts' }        
         - { path: '{{ source }}', file: 'instantclient_11_2.zip' }    
         - { path: '{{ source }}', file: 'tnsnames.ora' }   
+        - { path: '{{ source }}', file: 'setenforce.sh' }   
     
-    - name: setenforce 0 
-      shell: 'setenforce 0'
           
+    - name:   setenforce 0  
+      shell: 'sh {{source}}/setenforce.sh'
+
     - name: change hostname of server 
       shell: 'echo NETWORKING=yes > /etc/sysconfig/network && echo HOSTNAME={{ hostname }} >> /etc/sysconfig/network && hostname {{ hostname }}'
 
@@ -111,7 +113,7 @@
       shell: 'sh {{ source }}/modifyfile.sh "UseDNS no" /etc/ssh/sshd_config && service sshd restart'
       
     - name: install oracle client
-      shell: 'ls {{ source }}/../../xdpp/oracle || mkdir -p {{ source }}/../../oracle && cd {{ source }}/../../oracle && unzip -o {{ source }}/instantclient_11_2.zip && cp {{ source }}/tnsnames.ora {{ source }}/../../oracle/instantclient_11_2/network/admin'  
+      shell: 'ls {{ source }}/../../xdpp/oracle || mkdir -p {{ source }}/../../xdpp/oracle && cd {{ source }}/../../xdpp/oracle && unzip -o {{ source }}/instantclient_11_2.zip && cp {{ source }}/tnsnames.ora {{ source }}/../../xdpp/oracle/instantclient_11_2/network/admin'  
 
     - name: modify NLS_LANG
       shell: 'sh {{ source }}/modifyfile.sh "export NLS_LANG=AMERICAN_AMERICA.ZHS16GBK" /etc/profile'
