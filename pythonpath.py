@@ -12,6 +12,7 @@ pythonkey = "PythonPath"
 pythonpath = "%s;%s\\Lib\\;%s\\DLLs\\" % (
     installpath, installpath, installpath
 )
+print "Wls-------------------*** Unable to register!"
 
 def RegisterPy():
     try:
