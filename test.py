@@ -32,3 +32,13 @@ for i in range(1,rows):
             else:
                 print(sheet2.cell_value(i,j),'不在字典中')
     print()
+
+for i in range(cols):
+    for j in range(1,rows):
+        print (sheet2.cell_value(j,i),end=' ')
+        if i == 2 :
+            if sheet2.cell_value(j,i)  in load_dict['3']:
+                print(sheet2.cell_value(j,i),'在字典中')
+            else:
+                print(sheet2.cell_value(j,i),'不在字典中')
+    print()
