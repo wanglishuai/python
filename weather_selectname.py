@@ -27,9 +27,9 @@ def getweather(code):
     #print url
     html=getHtml(url)
     #print html
-    
+
     dictweather = json.loads(html)
-    
+
     #print dictweather
     '''
     for key in dictweather:
@@ -55,7 +55,7 @@ def getweather(code):
     print u'================weather  report ================='
     print u'=               Bye      Bye                    ='
     print u'================weather  report ================='
-    
+
 #读取文件
 citycode=open("D:\workspace\weather\code.txt")
 citycodelist=defaultdict(dict)
@@ -88,7 +88,7 @@ while 1:
     for province in citycodelist:
         print u'%s' % province.decode('utf-8'),
     print
-    provinceselected = raw_input("province select:") 
+    provinceselected = raw_input("province select:")
     print chardet.detect(provinceselected)
     if chardet.detect(provinceselected)['encoding'] == 'utf-8':
         pass
@@ -99,15 +99,15 @@ while 1:
         #第二层循环，遍历已选择省份所有的地市
         for region in citycodelist[provinceselected]:
             print u'%s' % region.decode('utf-8'),
-        print 
-        regionselected = raw_input("region select:") 
+        print
+        regionselected = raw_input("region select:")
         #print citycodelist[provinceselected][regionselected]
         #break
         if chardet.detect(regionselected)['encoding'] == 'utf-8':
             pass
         else:
             regionselected=regionselected.decode('gb2312').encode('utf-8')
-        
+
         if citycodelist[provinceselected].has_key(regionselected):
             for city in citycodelist[provinceselected][regionselected]:
                 print u'%s' % city.decode('utf-8'),
@@ -123,24 +123,15 @@ while 1:
             else:
                 print u"选择的城市有误，请重新输入:"
                 continue
-                
+
         else:
             print u"选择的地市有误，请重新输入:"
             continue
     else:
         print u"选择的省份有误，请重新输入:"
         continue
-    goon = raw_input("Do you want to leave here(Y/N):") 
+    goon = raw_input("Do you want to leave here(Y/N):")
     if goon == 'Y':
         continue
     else:
         break
-
-
-
-
-
-
-
-
-
